@@ -1,5 +1,8 @@
 import sqlite3 as sql
-db=sql.connect('data.db')
+from flask import Flask,request
+app=Flask(__name__)
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+db=sql.connect('data.db',check_same_thread=False)
 db.execute('''CREATE TABLE IF NOT EXISTS URL(
 ID INT PRIMARY KEY NOT NULL,
 URL TEXT NOT NULL,
@@ -7,34 +10,33 @@ URLSHORTEN NOT NULL) ''')
 
 class shorter_url():
 	inst={}
-	ids=db.execute('''SELECT ID FROM URL''')
-	print(ids)
-	try:
-		for id_ in ids:
-			id=id_[0]
-		id=id+1
+	def checkid(self):
+		ids=db.execute('''SELECT ID FROM URL''')
+		print(ids)
+		try:
+			for id_ in ids:
+				id=id_[0]
+			id=id+1
 		
-	except:
-		id=1
+		except:
+			id=1
+		return id
 	arrayurl=[]
-	counter=id
 	def short(self,the_url):
-		result=the_url.find(".com")
 		if ".com" not in the_url:
-			print("Please inter right url")
+			return "error sorry"
 		else:
-			self.inst[the_url]=self.id
-			shorting_id=self.encoder(self.id)
-			counters=self.id
-			self.id=self.id+1
-			self.counter=self.counter+1
+			self.inst[the_url]=self.checkid()
+			shorting_id=self.encoder(self.checkid())
+			counters=self.checkid()
 			data=db.execute(''' SELECT URL FROM URL''')
-			
 			for rec in data:
 				self.arrayurl.append(rec[0])
 			if the_url not in self.arrayurl:
-				self.thedb(counters,the_url,("url_short.com/"+str(shorting_id)))	
-				return "url_short.com/"+str(shorting_id)
+				self.thedb(counters,the_url,("joly.com/"+str(shorting_id)))
+				return "joly.com/"+str(shorting_id)
+					
+				
 			else:
 				URL=db.execute('''SELECT URLSHORTEN FROM URL WHERE URL=?''',(the_url,))
 				for url in URL:
@@ -54,14 +56,56 @@ class shorter_url():
 		VALUES(?,?,?)
 		''',(id,url,shorten_url))
 		db.commit()
-		db.close()
 	def deletefromdb(self):
 		delete=db.execute('''DELETE FROM URL WHERE id=9
 		''')
-		db.commit()
 		
-shorter=shorter_url()
-print("Please Inter your url you want to short:")
-data=input("inter:")
-print(shorter.short(data))
-                                                                 #By Miss.Robot
+		
+#++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+@app.route("/",methods=["Get","POST"])
+def input():
+	error=""
+	checker=0
+	the_shorten=""
+	shorter=shorter_url()
+	if request.method =="POST":
+		url=request.form["url"]
+		test=shorter.short(str(url))
+		if "error" in test:
+			error+="<p> {!r} is not a valid url".format(request.form["url"])
+			checker=1
+		else:
+			the_shorten=shorter.short(url)	
+			checker=2
+	if checker==1:
+		return '''
+			<! doctype html><html>
+			<head>
+			<title>Home</title>
+			</head>
+			<body>
+			{errors}
+			<form method="post" action=".">
+			<p><input name="url"/></p>
+			<p><input type="submit" value="Do The Shorten">
+			</p>
+			</form>
+			</body>
+			</html>'''.format(errors=error)
+	else:
+		return '''
+			<! doctype html><html>
+			<head>
+			<title>Home</title>
+			</head>
+			<body>
+			<form method="post" action=".">
+			<p><input name="url"/></p>
+			<p><input type="submit" value="Do The Shorten">
+			</p>
+			</form>
+			{url_shorten}
+			</body>
+			</html>'''.format(url_shorten=the_shorten)
+if __name__=='__main__':
+	app.run(debug=True,port=90)
