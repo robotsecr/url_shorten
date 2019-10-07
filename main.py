@@ -1,4 +1,5 @@
 import sqlite3 as sql
+import webbrowser as web
 from flask import Flask,request
 app=Flask(__name__)
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -59,6 +60,12 @@ class shorter_url():
 	def deletefromdb(self):
 		delete=db.execute('''DELETE FROM URL WHERE id=9
 		''')
+	def selecturl(self,theid):
+		url=""
+		data=db.execute('''SELECT URL FROM URL WHERE ID=?''',(theid,))
+		for i in data:
+			url=i[0]
+		return url
 		
 		
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -83,13 +90,17 @@ def input():
 			<head>
 			<title>Home</title>
 			</head>
-			<body>
+			<body style="background-color: red;margin: 0;position: absolute;top: 50%;left: 50%;margin-right:-50%
+    ;transform: translate(-50%, -50%)">
 			{errors}
+			<h1 >Enter Your UrL</h1>
+			
 			<form method="post" action=".">
 			<p><input name="url"/></p>
 			<p><input type="submit" value="Do The Shorten">
 			</p>
 			</form>
+			
 			</body>
 			</html>'''.format(errors=error)
 	else:
@@ -98,7 +109,9 @@ def input():
 			<head>
 			<title>Home</title>
 			</head>
-			<body>
+			<body style="background-color:powderblue;margin: 0;position: absolute;top: 50%;left: 50%;margin-right:-50%
+    ;transform: translate(-50%, -50%)">
+    <h1>Enter Your UrL</h1>
 			<form method="post" action=".">
 			<p><input name="url"/></p>
 			<p><input type="submit" value="Do The Shorten">
@@ -107,7 +120,15 @@ def input():
 			{url_shorten}
 			</body>
 			</html>'''.format(url_shorten=the_shorten)
-if __name__=='__main__':
-	app.run(debug=True,port=90)
+@app.route("/<name>",methods=["Get","POST"])
+def hello(name):
+	short=shorter_url()
+	url=short.selecturl((name))
+	if "https//" or "http//" in url:
+		web.open("https://"+url)
+	else:
+		 web.open(url)
+	return str(url)
 
-                                                                  #By Miss.Robot
+if __name__=='__main__':
+	app.run(debug=True,port=80)
